@@ -5,6 +5,8 @@ import type {
   MlbTeam,
   MlbStandingsResponse,
   MlbTeamRecord,
+  MlbPlayerStatsResponse,
+  MlbStatGroup,
 } from "./types";
 
 const BASE_URL = "https://statsapi.mlb.com/api/v1";
@@ -32,4 +34,16 @@ export async function fetchStandings(season: number): Promise<MlbTeamRecord[]> {
     `/standings?leagueId=103,104&season=${season}`
   );
   return data.records.flatMap((r) => r.teamRecords);
+}
+
+export async function fetchPlayerStats(
+  playerId: number,
+  stats: string,
+  season?: number
+): Promise<MlbStatGroup[]> {
+  const seasonParam = season ? `&season=${season}` : "";
+  const data = await mlbFetch<MlbPlayerStatsResponse>(
+    `/people/${playerId}/stats?stats=${stats}&group=hitting,pitching${seasonParam}`
+  );
+  return data.stats ?? [];
 }

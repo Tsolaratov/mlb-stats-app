@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { fetchPlayersBySeason, fetchTeams, fetchStandings } from "@/lib/mlb-api/client";
+import { fetchPlayersBySeason, fetchTeams, fetchStandings, fetchPlayerStats } from "@/lib/mlb-api/client";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -55,5 +55,29 @@ describe("fetchStandings", () => {
 
     const records = await fetchStandings(2026);
     expect(records).toHaveLength(3);
+  });
+});
+
+describe("fetchPlayerStats", () => {
+  it("builds the correct URL with stats and season", async () => {
+    const mockFetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ stats: [] }) });
+    vi.stubGlobal("fetch", mockFetch);
+
+    await fetchPlayerStats(660271, "season,career", 2026);
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://statsapi.mlb.com/api/v1/people/660271/stats?stats=season,career&group=hitting,pitching&season=2026"
+    );
+  });
+
+  it("omits the season param when not provided", async () => {
+    const mockFetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ stats: [] }) });
+    vi.stubGlobal("fetch", mockFetch);
+
+    await fetchPlayerStats(660271, "career");
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://statsapi.mlb.com/api/v1/people/660271/stats?stats=career&group=hitting,pitching"
+    );
   });
 });
