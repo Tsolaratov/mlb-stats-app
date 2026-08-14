@@ -83,6 +83,21 @@ describe("mapStanding", () => {
     };
     expect(mapStanding(record, 2026).games_back).toBe(10);
   });
+
+  it("falls back to safe defaults for unparseable rank and win pct", () => {
+    const record: MlbTeamRecord = {
+      team: { id: 121 },
+      wins: 0,
+      losses: 0,
+      winningPercentage: "-",
+      divisionRank: "-",
+      gamesBack: "-",
+    };
+    const row = mapStanding(record, 2026);
+    expect(row.win_pct).toBe(0);
+    expect(row.division_rank).toBeNull();
+    expect(row.games_back).toBe(0);
+  });
 });
 
 describe("mapSeasonStats", () => {
@@ -130,7 +145,7 @@ describe("mapSeasonStats", () => {
     });
   });
 
-  it("extracts pitching rows and skips splits without a team", () => {
+  it("extracts pitching rows for a season with a single team", () => {
     const groups: MlbStatGroup[] = [
       {
         group: { displayName: "pitching" },
@@ -150,10 +165,6 @@ describe("mapSeasonStats", () => {
               inningsPitched: "150.0",
             },
           },
-          {
-            season: "2025",
-            stat: { gamesPlayed: 20 },
-          },
         ],
       },
     ];
@@ -161,6 +172,7 @@ describe("mapSeasonStats", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({
       stat_type: "pitching",
+      team_id: 147,
       wins: 12,
       losses: 5,
       era: 3.2,
@@ -168,6 +180,72 @@ describe("mapSeasonStats", () => {
       saves: 0,
       innings_pitched: 150,
     });
+  });
+
+  it("uses the combined split for a traded season, tagged with the last team", () => {
+    const groups: MlbStatGroup[] = [
+      {
+        group: { displayName: "hitting" },
+        type: { displayName: "yearByYear" },
+        splits: [
+          {
+            season: "2025",
+            team: { id: 147 },
+            stat: { gamesPlayed: 60, avg: ".250", homeRuns: 8, rbi: 25 },
+          },
+          {
+            season: "2025",
+            team: { id: 119 },
+            stat: { gamesPlayed: 80, avg: ".300", homeRuns: 22, rbi: 65 },
+          },
+          {
+            // Combined full-season totals across both teams (no team field).
+            season: "2025",
+            stat: { gamesPlayed: 140, avg: ".279", homeRuns: 30, rbi: 90 },
+          },
+        ],
+      },
+    ];
+    const rows = mapSeasonStats(660271, groups);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      player_id: 660271,
+      season: 2025,
+      stat_type: "hitting",
+      // the team the player finished the season with
+      team_id: 119,
+      games: 140,
+      avg: 0.279,
+      hr: 30,
+      rbi: 90,
+    });
+  });
+
+  it("keeps separate rows per season and does not merge across seasons", () => {
+    const groups: MlbStatGroup[] = [
+      {
+        group: { displayName: "hitting" },
+        type: { displayName: "yearByYear" },
+        splits: [
+          { season: "2024", team: { id: 147 }, stat: { gamesPlayed: 150, homeRuns: 20 } },
+          { season: "2025", team: { id: 119 }, stat: { gamesPlayed: 140, homeRuns: 30 } },
+        ],
+      },
+    ];
+    const rows = mapSeasonStats(660271, groups);
+    expect(rows).toHaveLength(2);
+    expect(rows.map((r) => r.season).sort()).toEqual([2024, 2025]);
+  });
+
+  it("skips a combined split that has no per-team split to source a team id from", () => {
+    const groups: MlbStatGroup[] = [
+      {
+        group: { displayName: "hitting" },
+        type: { displayName: "yearByYear" },
+        splits: [{ season: "2025", stat: { gamesPlayed: 140, homeRuns: 30 } }],
+      },
+    ];
+    expect(mapSeasonStats(660271, groups)).toHaveLength(0);
   });
 
   it("ignores career-type groups", () => {

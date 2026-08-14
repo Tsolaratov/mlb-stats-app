@@ -4,10 +4,13 @@ import type { PlayerRow, SeasonStatRow, CareerStatRow } from "./types";
 
 export async function searchPlayers(query: string, limit = 20): Promise<PlayerRow[]> {
   const supabase = createSupabaseClient();
+  // Cap the length and neutralise ILIKE wildcards so a user-supplied "%" cannot
+  // turn into a full-table scan pattern.
+  const pattern = query.slice(0, 100).replace(/[%_]/g, "\\$&");
   const { data, error } = await supabase
     .from("players")
     .select("*")
-    .ilike("full_name", `%${query}%`)
+    .ilike("full_name", `%${pattern}%`)
     .order("is_active", { ascending: false })
     .limit(limit);
   if (error) throw error;

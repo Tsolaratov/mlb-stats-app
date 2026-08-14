@@ -23,7 +23,7 @@ export interface StandingRow {
   wins: number;
   losses: number;
   win_pct: number;
-  division_rank: number;
+  division_rank: number | null;
   games_back: number;
   updated_at: string;
 }

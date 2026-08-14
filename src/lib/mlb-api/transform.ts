@@ -1,4 +1,4 @@
-import type { MlbPerson, MlbTeam, MlbTeamRecord, MlbStatGroup } from "./types";
+import type { MlbPerson, MlbTeam, MlbTeamRecord, MlbStatGroup, MlbStatSplit } from "./types";
 import type {
   PlayerRow,
   TeamRow,
@@ -32,14 +32,21 @@ export function mapTeam(team: MlbTeam): TeamRow {
 }
 
 export function mapStanding(record: MlbTeamRecord, season: number): StandingRow {
+  // One malformed value must not fail the whole upsertStandings batch.
+  const winPct = parseFloat(record.winningPercentage);
+  const divisionRank = parseInt(record.divisionRank, 10);
+  const gamesBack = record.gamesBack === "-" ? 0 : parseFloat(record.gamesBack);
+
   return {
     team_id: record.team.id,
     season,
     wins: record.wins,
     losses: record.losses,
-    win_pct: parseFloat(record.winningPercentage),
-    division_rank: parseInt(record.divisionRank, 10),
-    games_back: record.gamesBack === "-" ? 0 : parseFloat(record.gamesBack),
+    // win_pct is NOT NULL in the schema, so fall back to 0.
+    win_pct: Number.isNaN(winPct) ? 0 : winPct,
+    // division_rank is nullable, so an unparseable rank can stay null.
+    division_rank: Number.isNaN(divisionRank) ? null : divisionRank,
+    games_back: Number.isNaN(gamesBack) ? 0 : gamesBack,
     updated_at: new Date().toISOString(),
   };
 }
@@ -109,15 +116,54 @@ export function mapSeasonStats(playerId: number, groups: MlbStatGroup[]): Season
     const typeName = group.type.displayName;
     if (typeName !== "season" && typeName !== "yearByYear") continue;
     const statType = statTypeFromGroup(group);
+
+    // Group this stat type's splits by season. For a traded player the MLB API
+    // returns one split per team plus a combined split (no `team`) holding the
+    // full-season totals; without grouping we would emit only the partial
+    // per-team rows and double-count the player on leaderboards.
+    const splitsBySeason = new Map<string, MlbStatSplit[]>();
     for (const split of group.splits) {
-      if (!split.season || !split.team) continue;
-      rows.push({
-        player_id: playerId,
-        season: parseInt(split.season, 10),
-        stat_type: statType,
-        team_id: split.team.id,
-        ...extractStatFields(statType, split.stat),
-      });
+      if (!split.season) continue;
+      const existing = splitsBySeason.get(split.season);
+      if (existing) existing.push(split);
+      else splitsBySeason.set(split.season, [split]);
+    }
+
+    for (const [season, splits] of splitsBySeason) {
+      const combined = splits.find((s) => !s.team);
+      const teamSplits = splits.filter((s) => s.team);
+
+      if (combined) {
+        const lastTeamSplit = teamSplits[teamSplits.length - 1];
+        if (!lastTeamSplit?.team) {
+          // Shouldn't happen with the real API shape, but a combined split has
+          // no team id of its own and team_id is NOT NULL, so skip it.
+          console.warn(
+            `Skipping combined ${statType} split for player ${playerId} season ${season}: no per-team split to source a team_id from`
+          );
+          continue;
+        }
+        // The team the player finished the season with.
+        rows.push({
+          player_id: playerId,
+          season: parseInt(season, 10),
+          stat_type: statType,
+          team_id: lastTeamSplit.team.id,
+          ...extractStatFields(statType, combined.stat),
+        });
+        continue;
+      }
+
+      // No trade that season: emit each per-team split as-is.
+      for (const split of teamSplits) {
+        rows.push({
+          player_id: playerId,
+          season: parseInt(season, 10),
+          stat_type: statType,
+          team_id: split.team!.id,
+          ...extractStatFields(statType, split.stat),
+        });
+      }
     }
   }
   return rows;

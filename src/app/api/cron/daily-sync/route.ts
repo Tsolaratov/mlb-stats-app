@@ -16,14 +16,23 @@ export async function GET(request: NextRequest) {
 
   const season = new Date().getFullYear();
 
-  const teams = await fetchTeams(season);
-  await upsertTeams(teams.map(mapTeam));
+  let teams, standings, activePlayers;
+  try {
+    teams = await fetchTeams(season);
+    await upsertTeams(teams.map(mapTeam));
 
-  const standings = await fetchStandings(season);
-  await upsertStandings(standings.map((r) => mapStanding(r, season)));
+    standings = await fetchStandings(season);
+    await upsertStandings(standings.map((r) => mapStanding(r, season)));
 
-  const activePlayers = await fetchPlayersBySeason(season);
-  await upsertPlayers(activePlayers.map(mapPlayer));
+    activePlayers = await fetchPlayersBySeason(season);
+    await upsertPlayers(activePlayers.map(mapPlayer));
+  } catch (err) {
+    console.error("Daily sync failed during the teams/standings/players stage:", err);
+    return NextResponse.json(
+      { ok: false, error: err instanceof Error ? err.message : String(err) },
+      { status: 500 }
+    );
+  }
 
   const results = await mapWithConcurrency(activePlayers, 25, async (person) => {
     try {

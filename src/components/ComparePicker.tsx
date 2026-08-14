@@ -22,6 +22,11 @@ export default function ComparePicker({ selectedIds }: { selectedIds: number[] }
       return;
     }
     const res = await fetch(`/api/players/search?q=${encodeURIComponent(value)}`);
+    if (!res.ok) {
+      // Never throw inside an event handler; degrade to no suggestions.
+      setResults([]);
+      return;
+    }
     const data = await res.json();
     setResults(data.players ?? []);
   }
