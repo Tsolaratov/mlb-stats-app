@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { mapPlayer, mapTeam, mapStanding } from "@/lib/mlb-api/transform";
-import type { MlbPerson, MlbTeam, MlbTeamRecord } from "@/lib/mlb-api/types";
+import { mapPlayer, mapTeam, mapStanding, mapSeasonStats, mapCareerStats } from "@/lib/mlb-api/transform";
+import type { MlbPerson, MlbTeam, MlbTeamRecord, MlbStatGroup } from "@/lib/mlb-api/types";
 
 describe("mapPlayer", () => {
   it("maps an active player", () => {
@@ -82,5 +82,161 @@ describe("mapStanding", () => {
       gamesBack: "10.0",
     };
     expect(mapStanding(record, 2026).games_back).toBe(10);
+  });
+});
+
+describe("mapSeasonStats", () => {
+  it("extracts hitting rows from yearByYear splits", () => {
+    const groups: MlbStatGroup[] = [
+      {
+        group: { displayName: "hitting" },
+        type: { displayName: "yearByYear" },
+        splits: [
+          {
+            season: "2025",
+            team: { id: 147 },
+            stat: {
+              gamesPlayed: 150,
+              avg: ".285",
+              homeRuns: 30,
+              rbi: 90,
+              obp: ".360",
+              slg: ".520",
+              ops: ".880",
+              stolenBases: 10,
+              strikeOuts: 120,
+            },
+          },
+        ],
+      },
+    ];
+    const rows = mapSeasonStats(660271, groups);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      player_id: 660271,
+      season: 2025,
+      stat_type: "hitting",
+      team_id: 147,
+      games: 150,
+      avg: 0.285,
+      hr: 30,
+      rbi: 90,
+      obp: 0.36,
+      slg: 0.52,
+      ops: 0.88,
+      sb: 10,
+      so: 120,
+      era: null,
+    });
+  });
+
+  it("extracts pitching rows and skips splits without a team", () => {
+    const groups: MlbStatGroup[] = [
+      {
+        group: { displayName: "pitching" },
+        type: { displayName: "yearByYear" },
+        splits: [
+          {
+            season: "2025",
+            team: { id: 147 },
+            stat: {
+              gamesPlayed: 20,
+              wins: 12,
+              losses: 5,
+              era: "3.20",
+              strikeOuts: 180,
+              whip: "1.05",
+              saves: 0,
+              inningsPitched: "150.0",
+            },
+          },
+          {
+            season: "2025",
+            stat: { gamesPlayed: 20 },
+          },
+        ],
+      },
+    ];
+    const rows = mapSeasonStats(660271, groups);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      stat_type: "pitching",
+      wins: 12,
+      losses: 5,
+      era: 3.2,
+      whip: 1.05,
+      saves: 0,
+      innings_pitched: 150,
+    });
+  });
+
+  it("ignores career-type groups", () => {
+    const groups: MlbStatGroup[] = [
+      {
+        group: { displayName: "hitting" },
+        type: { displayName: "career" },
+        splits: [{ stat: { gamesPlayed: 500 } }],
+      },
+    ];
+    expect(mapSeasonStats(1, groups)).toHaveLength(0);
+  });
+});
+
+describe("mapCareerStats", () => {
+  it("extracts a single career row per stat type", () => {
+    const groups: MlbStatGroup[] = [
+      {
+        group: { displayName: "hitting" },
+        type: { displayName: "career" },
+        splits: [
+          {
+            stat: {
+              gamesPlayed: 800,
+              avg: ".270",
+              homeRuns: 200,
+              rbi: 600,
+              obp: ".350",
+              slg: ".480",
+              ops: ".830",
+              stolenBases: 80,
+              strikeOuts: 700,
+            },
+          },
+        ],
+      },
+    ];
+    const rows = mapCareerStats(660271, groups);
+    expect(rows).toEqual([
+      {
+        player_id: 660271,
+        stat_type: "hitting",
+        games: 800,
+        avg: 0.27,
+        hr: 200,
+        rbi: 600,
+        obp: 0.35,
+        slg: 0.48,
+        ops: 0.83,
+        sb: 80,
+        so: 700,
+        wins: null,
+        losses: null,
+        era: null,
+        whip: null,
+        saves: null,
+        innings_pitched: null,
+      },
+    ]);
+  });
+
+  it("ignores non-career groups", () => {
+    const groups: MlbStatGroup[] = [
+      {
+        group: { displayName: "hitting" },
+        type: { displayName: "season" },
+        splits: [{ season: "2025", team: { id: 1 }, stat: { gamesPlayed: 100 } }],
+      },
+    ];
+    expect(mapCareerStats(1, groups)).toHaveLength(0);
   });
 });
