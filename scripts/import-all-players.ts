@@ -12,9 +12,29 @@ const CURRENT_SEASON = new Date().getFullYear();
 const BATCH_SIZE = 500;
 
 async function main() {
-  const teams = await fetchTeams(CURRENT_SEASON);
-  await upsertTeams(teams.map(mapTeam));
-  console.log(`Imported ${teams.length} teams`);
+  // Historical teams: season_stats.team_id has a NOT NULL FK to teams(id), and
+  // on-demand stat fetches for retired players reference long-defunct franchises,
+  // so every season's team list must be present, not just the current one.
+  const teamsById = new Map<number, ReturnType<typeof mapTeam>>();
+  for (let season = FIRST_SEASON; season <= CURRENT_SEASON; season++) {
+    try {
+      const teams = await fetchTeams(season);
+      for (const t of teams) {
+        teamsById.set(t.id, mapTeam(t));
+      }
+      console.log(`Season ${season}: ${teams.length} teams (unique so far: ${teamsById.size})`);
+    } catch (err) {
+      console.error(`Failed to fetch teams for season ${season}:`, err);
+    }
+  }
+
+  const allTeams = Array.from(teamsById.values());
+  for (let i = 0; i < allTeams.length; i += BATCH_SIZE) {
+    const batch = allTeams.slice(i, i + BATCH_SIZE);
+    await upsertTeams(batch);
+    console.log(`Upserted ${Math.min(i + BATCH_SIZE, allTeams.length)}/${allTeams.length} teams`);
+  }
+  console.log(`Imported ${allTeams.length} unique teams across ${FIRST_SEASON}-${CURRENT_SEASON}`);
 
   const playersById = new Map<number, ReturnType<typeof mapPlayer>>();
   for (let season = FIRST_SEASON; season <= CURRENT_SEASON; season++) {
