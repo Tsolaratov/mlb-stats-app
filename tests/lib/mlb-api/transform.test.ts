@@ -240,3 +240,74 @@ describe("mapCareerStats", () => {
     expect(mapCareerStats(1, groups)).toHaveLength(0);
   });
 });
+
+describe("mapSeasonStats and mapCareerStats together with mixed groups", () => {
+  it("filters correctly when both yearByYear and career groups are in the same array", () => {
+    const groups: MlbStatGroup[] = [
+      {
+        group: { displayName: "hitting" },
+        type: { displayName: "yearByYear" },
+        splits: [
+          {
+            season: "2025",
+            team: { id: 147 },
+            stat: {
+              gamesPlayed: 150,
+              avg: ".285",
+              homeRuns: 30,
+              rbi: 90,
+              obp: ".360",
+              slg: ".520",
+              ops: ".880",
+              stolenBases: 10,
+              strikeOuts: 120,
+            },
+          },
+        ],
+      },
+      {
+        group: { displayName: "hitting" },
+        type: { displayName: "career" },
+        splits: [
+          {
+            stat: {
+              gamesPlayed: 800,
+              avg: ".270",
+              homeRuns: 200,
+              rbi: 600,
+              obp: ".350",
+              slg: ".480",
+              ops: ".830",
+              stolenBases: 80,
+              strikeOuts: 700,
+            },
+          },
+        ],
+      },
+    ];
+
+    // mapSeasonStats should return only the yearByYear row
+    const seasonRows = mapSeasonStats(660271, groups);
+    expect(seasonRows).toHaveLength(1);
+    expect(seasonRows[0]).toMatchObject({
+      player_id: 660271,
+      season: 2025,
+      stat_type: "hitting",
+      team_id: 147,
+      games: 150,
+      avg: 0.285,
+      hr: 30,
+    });
+
+    // mapCareerStats should return only the career row
+    const careerRows = mapCareerStats(660271, groups);
+    expect(careerRows).toHaveLength(1);
+    expect(careerRows[0]).toMatchObject({
+      player_id: 660271,
+      stat_type: "hitting",
+      games: 800,
+      avg: 0.27,
+      hr: 200,
+    });
+  });
+});
