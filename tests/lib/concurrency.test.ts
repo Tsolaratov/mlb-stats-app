@@ -2,9 +2,14 @@ import { describe, it, expect } from "vitest";
 import { mapWithConcurrency } from "@/lib/concurrency";
 
 describe("mapWithConcurrency", () => {
-  it("processes all items and preserves order", async () => {
+  it("processes all items and preserves order even when later items finish first", async () => {
     const items = [1, 2, 3, 4, 5];
-    const results = await mapWithConcurrency(items, 2, async (n) => n * 2);
+    const results = await mapWithConcurrency(items, 2, async (n) => {
+      // reverse delay: earlier items take longer, so they'd finish LAST if the
+      // implementation used completion order instead of input order
+      await new Promise((resolve) => setTimeout(resolve, (6 - n) * 5));
+      return n * 2;
+    });
     expect(results).toEqual([2, 4, 6, 8, 10]);
   });
 
