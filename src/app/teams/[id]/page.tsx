@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTeamById, getTeamRoster } from "@/lib/db/teams";
+import { getCurrentSeason } from "@/lib/season";
 
 export default async function TeamDetailPage({
   params,
@@ -9,10 +10,11 @@ export default async function TeamDetailPage({
 }) {
   const { id } = await params;
   const teamId = parseInt(id, 10);
+  if (Number.isNaN(teamId)) notFound();
   const team = await getTeamById(teamId);
   if (!team) notFound();
 
-  const season = new Date().getFullYear();
+  const season = await getCurrentSeason();
   const roster = await getTeamRoster(teamId, season);
 
   return (

@@ -2,9 +2,10 @@ import Link from "next/link";
 import { getStandings } from "@/lib/db/standings";
 import { getTeams } from "@/lib/db/teams";
 import type { StandingRow } from "@/lib/db/types";
+import { getCurrentSeason } from "@/lib/season";
 
 export default async function TeamsPage() {
-  const season = new Date().getFullYear();
+  const season = await getCurrentSeason();
   const [standings, teams] = await Promise.all([getStandings(season), getTeams()]);
   const teamById = new Map(teams.map((t) => [t.id, t]));
 

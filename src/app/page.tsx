@@ -2,11 +2,12 @@ import Link from "next/link";
 import { getLeaders } from "@/lib/db/leaders";
 import { getStandings } from "@/lib/db/standings";
 import { getTeams } from "@/lib/db/teams";
+import { getCurrentSeason } from "@/lib/season";
 
 export const revalidate = 3600;
 
 export default async function HomePage() {
-  const season = new Date().getFullYear();
+  const season = await getCurrentSeason();
   const [hrLeaders, avgLeaders, standings, teams] = await Promise.all([
     getLeaders(season, "hr", 5),
     getLeaders(season, "avg", 5),

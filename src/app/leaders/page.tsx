@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { getLeaders, type LeaderStat } from "@/lib/db/leaders";
+import { notFound } from "next/navigation";
+import { getLeaders, isLeaderStat, type LeaderStat } from "@/lib/db/leaders";
+import { getCurrentSeason } from "@/lib/season";
 
 const STAT_OPTIONS: { value: LeaderStat; label: string }[] = [
   { value: "avg", label: "打率" },
@@ -16,8 +18,10 @@ export default async function LeadersPage({
   searchParams: Promise<{ stat?: string; season?: string }>;
 }) {
   const params = await searchParams;
-  const season = params.season ? parseInt(params.season, 10) : new Date().getFullYear();
-  const stat = (params.stat ?? "avg") as LeaderStat;
+  const season = params.season ? parseInt(params.season, 10) : await getCurrentSeason();
+  if (Number.isNaN(season)) notFound();
+  // params.stat flows into a raw Supabase column name, so it must be whitelisted.
+  const stat: LeaderStat = isLeaderStat(params.stat) ? params.stat : "avg";
   const leaders = await getLeaders(season, stat);
 
   return (

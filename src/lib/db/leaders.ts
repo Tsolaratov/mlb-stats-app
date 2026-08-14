@@ -4,7 +4,18 @@ const HITTING_STATS = ["avg", "hr", "rbi", "obp", "slg", "sb"] as const;
 const PITCHING_STATS = ["era", "wins", "so", "saves", "whip"] as const;
 export type LeaderStat = (typeof HITTING_STATS)[number] | (typeof PITCHING_STATS)[number];
 
+export const LEADER_STATS: readonly LeaderStat[] = [...HITTING_STATS, ...PITCHING_STATS];
+
+/** Narrows an arbitrary (user-supplied) string to a known stat column name. */
+export function isLeaderStat(value: string | undefined): value is LeaderStat {
+  return value !== undefined && (LEADER_STATS as readonly string[]).includes(value);
+}
+
 const ASCENDING_STATS = new Set<string>(["era", "whip"]);
+
+/** Minimum playing time required to appear on a leaderboard. */
+const MIN_GAMES = 10;
+const MIN_INNINGS_PITCHED = 10;
 
 export interface LeaderRow {
   player_id: number;
@@ -21,14 +32,20 @@ export async function getLeaders(
   const statType = (PITCHING_STATS as readonly string[]).includes(stat) ? "pitching" : "hitting";
   const ascending = ASCENDING_STATS.has(stat);
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("season_stats")
     .select(`*, players(full_name)`)
     .eq("season", season)
     .eq("stat_type", statType)
-    .not(stat, "is", null)
-    .order(stat, { ascending })
-    .limit(limit);
+    .not(stat, "is", null);
+
+  // Qualifier: keep 1-for-1 hitters and one-inning pitchers off the boards.
+  query =
+    statType === "pitching"
+      ? query.gte("innings_pitched", MIN_INNINGS_PITCHED)
+      : query.gte("games", MIN_GAMES);
+
+  const { data, error } = await query.order(stat, { ascending }).limit(limit);
   if (error) throw error;
 
   return (data ?? []).map((row: Record<string, unknown>) => ({
