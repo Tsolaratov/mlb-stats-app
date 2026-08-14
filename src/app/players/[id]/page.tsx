@@ -11,6 +11,7 @@ export default async function PlayerDetailPage({
 }) {
   const { id } = await params;
   const playerId = parseInt(id, 10);
+  if (Number.isNaN(playerId)) notFound();
   const player = await getPlayerById(playerId);
   if (!player) notFound();
 
