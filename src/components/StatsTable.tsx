@@ -47,7 +47,7 @@ export default function StatsTable({
           <tr key={i}>
             {showSeason && "season" in row && <td>{row.season}</td>}
             {columns.map((c) => (
-              <td key={c.key}>{String((row as Record<string, unknown>)[c.key] ?? "-")}</td>
+              <td key={c.key}>{String((row as unknown as Record<string, unknown>)[c.key] ?? "-")}</td>
             ))}
           </tr>
         ))}

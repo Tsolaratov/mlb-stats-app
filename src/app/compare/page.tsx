@@ -51,7 +51,7 @@ export default async function ComparePage({
                   <td>{stat}</td>
                   {valid.map((v) => {
                     const row = v.stats.find((s) => s.stat_type === statType);
-                    const value = row ? (row as Record<string, unknown>)[stat] : null;
+                    const value = row ? (row as unknown as Record<string, unknown>)[stat] : null;
                     return <td key={v.player.id}>{value === null || value === undefined ? "-" : String(value)}</td>;
                   })}
                 </tr>
