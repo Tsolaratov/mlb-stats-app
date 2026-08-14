@@ -10,11 +10,14 @@ export default async function ComparePage({
   searchParams: Promise<{ players?: string }>;
 }) {
   const { players: playersParam } = await searchParams;
-  const ids = (playersParam ?? "")
-    .split(",")
-    .map((s) => parseInt(s, 10))
-    .filter((n) => !isNaN(n))
-    .slice(0, 5);
+  const ids = Array.from(
+    new Set(
+      (playersParam ?? "")
+        .split(",")
+        .map((s) => parseInt(s, 10))
+        .filter((n) => !isNaN(n))
+    )
+  ).slice(0, 5);
 
   const entries = await Promise.all(
     ids.map(async (id) => {

@@ -28,7 +28,10 @@ export default function ComparePicker({ selectedIds }: { selectedIds: number[] }
 
   function addPlayer(id: number) {
     if (selectedIds.includes(id) || selectedIds.length >= MAX_PLAYERS) return;
-    router.push(`/compare?players=${[...selectedIds, id].join(",")}`);
+    const next = [...selectedIds, id];
+    router.push(`/compare?players=${next.join(",")}`);
+    setQuery("");
+    setResults([]);
   }
 
   function removePlayer(id: number) {
