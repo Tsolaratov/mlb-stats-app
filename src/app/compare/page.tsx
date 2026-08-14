@@ -34,12 +34,12 @@ export default async function ComparePage({
       <h1 className="text-2xl font-bold mb-4">選手比較</h1>
       <ComparePicker selectedIds={ids} />
       {valid.length > 0 && (
-        <table className="w-full text-left mt-6">
+        <table className="w-full text-left mt-6 border-collapse">
           <thead>
             <tr>
-              <th>指標</th>
+              <th className="px-3 py-1">指標</th>
               {valid.map((v) => (
-                <th key={v.player.id}>{v.player.full_name}</th>
+                <th key={v.player.id} className="px-3 py-1">{v.player.full_name}</th>
               ))}
             </tr>
           </thead>
@@ -47,12 +47,12 @@ export default async function ComparePage({
             {COMPARE_STATS.map((stat) => {
               const statType = PITCHING_STATS.has(stat) ? "pitching" : "hitting";
               return (
-                <tr key={stat}>
-                  <td>{stat}</td>
+                <tr key={stat} className="border-t">
+                  <td className="px-3 py-1">{stat}</td>
                   {valid.map((v) => {
                     const row = v.stats.find((s) => s.stat_type === statType);
                     const value = row ? (row as unknown as Record<string, unknown>)[stat] : null;
-                    return <td key={v.player.id}>{value === null || value === undefined ? "-" : String(value)}</td>;
+                    return <td key={v.player.id} className="px-3 py-1">{value === null || value === undefined ? "-" : String(value)}</td>;
                   })}
                 </tr>
               );

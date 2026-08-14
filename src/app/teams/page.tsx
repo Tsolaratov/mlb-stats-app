@@ -23,28 +23,28 @@ export default async function TeamsPage() {
       {Array.from(byDivision.entries()).map(([division, rows]) => (
         <section key={division}>
           <h2 className="text-lg font-semibold mb-2">{division}</h2>
-          <table className="w-full text-left">
+          <table className="w-full text-left border-collapse">
             <thead>
               <tr>
-                <th>チーム</th>
-                <th>勝</th>
-                <th>敗</th>
-                <th>勝率</th>
-                <th>差</th>
+                <th className="px-3 py-1">チーム</th>
+                <th className="px-3 py-1">勝</th>
+                <th className="px-3 py-1">敗</th>
+                <th className="px-3 py-1">勝率</th>
+                <th className="px-3 py-1">差</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((s) => (
-                <tr key={s.team_id}>
-                  <td>
+                <tr key={s.team_id} className="border-t">
+                  <td className="px-3 py-1">
                     <Link href={`/teams/${s.team_id}`} className="text-blue-600 hover:underline">
                       {teamById.get(s.team_id)?.name ?? s.team_id}
                     </Link>
                   </td>
-                  <td>{s.wins}</td>
-                  <td>{s.losses}</td>
-                  <td>{s.win_pct}</td>
-                  <td>{s.games_back}</td>
+                  <td className="px-3 py-1">{s.wins}</td>
+                  <td className="px-3 py-1">{s.losses}</td>
+                  <td className="px-3 py-1">{s.win_pct}</td>
+                  <td className="px-3 py-1">{s.games_back}</td>
                 </tr>
               ))}
             </tbody>

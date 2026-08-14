@@ -50,26 +50,26 @@ export default async function HomePage() {
 
       <section>
         <h2 className="text-lg font-semibold mb-2">チーム順位 ({season})</h2>
-        <table className="w-full text-left">
+        <table className="w-full text-left border-collapse">
           <thead>
             <tr>
-              <th>チーム</th>
-              <th>勝</th>
-              <th>敗</th>
-              <th>勝率</th>
+              <th className="px-3 py-1">チーム</th>
+              <th className="px-3 py-1">勝</th>
+              <th className="px-3 py-1">敗</th>
+              <th className="px-3 py-1">勝率</th>
             </tr>
           </thead>
           <tbody>
             {standings.map((s) => (
-              <tr key={s.team_id}>
-                <td>
+              <tr key={s.team_id} className="border-t">
+                <td className="px-3 py-1">
                   <Link href={`/teams/${s.team_id}`} className="text-blue-600 hover:underline">
                     {teamNameById.get(s.team_id) ?? s.team_id}
                   </Link>
                 </td>
-                <td>{s.wins}</td>
-                <td>{s.losses}</td>
-                <td>{s.win_pct}</td>
+                <td className="px-3 py-1">{s.wins}</td>
+                <td className="px-3 py-1">{s.losses}</td>
+                <td className="px-3 py-1">{s.win_pct}</td>
               </tr>
             ))}
           </tbody>
