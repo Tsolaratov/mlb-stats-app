@@ -16,7 +16,15 @@ export default async function HomePage() {
     getStandings(season),
     getTeams(),
   ]);
-  const teamNameById = new Map(teams.map((t) => [t.id, t.name]));
+  const teamById = new Map(teams.map((t) => [t.id, t]));
+
+  // Home page shows an excerpt, not the full 30-team table: each division's
+  // leader, sorted league-wide by winning percentage. division_rank is only
+  // meaningful within a division, so sorting the full list by it alone
+  // clumps all division leaders together in an order that looks arbitrary.
+  const divisionLeaders = standings
+    .filter((s) => s.division_rank === 1)
+    .sort((a, b) => b.win_pct - a.win_pct);
 
   return (
     <main className="max-w-4xl mx-auto p-6 space-y-10">
@@ -64,25 +72,34 @@ export default async function HomePage() {
       </div>
 
       <Card>
-        <h2 className="font-display uppercase tracking-wide text-sm text-ink-soft border-b border-card-line pb-2 mb-3">
-          チーム順位 ({season})
-        </h2>
+        <div className="flex items-baseline justify-between border-b border-card-line pb-2 mb-3">
+          <h2 className="font-display uppercase tracking-wide text-sm text-ink-soft">
+            地区首位 ({season})
+          </h2>
+          <Link href="/teams" className="text-seam text-sm hover:underline font-body">
+            全順位表を見る →
+          </Link>
+        </div>
         <table className="w-full text-left border-collapse font-data text-sm">
           <thead>
             <tr className="font-display uppercase text-xs tracking-wide text-ink-soft">
               <th className="px-3 py-1 font-normal">チーム</th>
+              <th className="px-3 py-1 font-normal">地区</th>
               <th className="px-3 py-1 font-normal">勝</th>
               <th className="px-3 py-1 font-normal">敗</th>
               <th className="px-3 py-1 font-normal">勝率</th>
             </tr>
           </thead>
           <tbody>
-            {standings.map((s) => (
+            {divisionLeaders.map((s) => (
               <tr key={s.team_id} className="border-t border-card-line">
                 <td className="px-3 py-1 font-body">
                   <Link href={`/teams/${s.team_id}`} className="text-seam hover:underline">
-                    {teamNameById.get(s.team_id) ?? s.team_id}
+                    {teamById.get(s.team_id)?.name ?? s.team_id}
                   </Link>
+                </td>
+                <td className="px-3 py-1 font-body text-ink-soft">
+                  {teamById.get(s.team_id)?.division ?? "-"}
                 </td>
                 <td className="px-3 py-1">{s.wins}</td>
                 <td className="px-3 py-1">{s.losses}</td>
