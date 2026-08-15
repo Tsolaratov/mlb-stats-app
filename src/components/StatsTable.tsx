@@ -33,18 +33,18 @@ export default function StatsTable({
   const columns = statType === "hitting" ? HITTING_COLUMNS : PITCHING_COLUMNS;
 
   return (
-    <table className="w-full text-left text-sm mb-4 border-collapse">
+    <table className="w-full text-left text-sm mb-4 border-collapse font-data">
       <thead>
-        <tr>
-          {showSeason && <th className="px-3 py-1">年度</th>}
+        <tr className="font-display uppercase text-xs tracking-wide text-ink-soft">
+          {showSeason && <th className="px-3 py-1 font-normal">年度</th>}
           {columns.map((c) => (
-            <th key={c.key} className="px-3 py-1">{c.label}</th>
+            <th key={c.key} className="px-3 py-1 font-normal">{c.label}</th>
           ))}
         </tr>
       </thead>
       <tbody>
         {filtered.map((row, i) => (
-          <tr key={i} className="border-t">
+          <tr key={i} className="border-t border-card-line">
             {showSeason && "season" in row && <td className="px-3 py-1">{row.season}</td>}
             {columns.map((c) => (
               <td key={c.key} className="px-3 py-1">{String((row as unknown as Record<string, unknown>)[c.key] ?? "-")}</td>

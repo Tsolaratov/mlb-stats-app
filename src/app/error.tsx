@@ -16,18 +16,20 @@ export default function Error({
 
   return (
     <main className="max-w-2xl mx-auto p-6 space-y-4">
-      <h1 className="text-2xl font-bold">エラーが発生しました</h1>
-      <p className="text-gray-500">
+      <h1 className="font-display font-bold uppercase text-3xl tracking-wide text-seam">
+        エラーが発生しました
+      </h1>
+      <p className="text-card/80">
         データの取得に失敗しました。時間をおいて再度お試しください。
       </p>
-      <div className="flex gap-4 items-center">
+      <div className="flex gap-4 items-center font-body">
         <button
           onClick={() => retry()}
-          className="border px-3 py-1 text-blue-600 hover:underline"
+          className="border border-amber text-amber rounded-sm px-3 py-1 hover:bg-amber hover:text-field-dark transition-colors"
         >
           再試行
         </button>
-        <Link href="/" className="text-blue-600 hover:underline">
+        <Link href="/" className="text-seam hover:underline">
           トップページに戻る
         </Link>
       </div>

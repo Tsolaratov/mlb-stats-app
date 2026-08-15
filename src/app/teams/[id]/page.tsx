@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTeamById, getTeamRoster } from "@/lib/db/teams";
 import { getCurrentSeason } from "@/lib/season";
+import Card from "@/components/Card";
 
 export default async function TeamDetailPage({
   params,
@@ -18,18 +19,20 @@ export default async function TeamDetailPage({
   const roster = await getTeamRoster(teamId, season);
 
   return (
-    <main className="max-w-3xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">{team.name}</h1>
-      <ul className="space-y-1">
-        {roster.map((r) => (
-          <li key={`${r.player_id}-${r.stat_type}`}>
-            <Link href={`/players/${r.player_id}`} className="text-blue-600 hover:underline">
-              {r.players?.full_name ?? r.player_id}
-            </Link>{" "}
-            {r.stat_type === "hitting" ? `打率 ${r.avg ?? "-"}` : `防御率 ${r.era ?? "-"}`}
-          </li>
-        ))}
-      </ul>
+    <main className="max-w-3xl mx-auto p-6 space-y-6">
+      <h1 className="font-display font-bold uppercase text-4xl tracking-wide">{team.name}</h1>
+      <Card>
+        <ul className="divide-y divide-card-line font-data text-sm">
+          {roster.map((r) => (
+            <li key={`${r.player_id}-${r.stat_type}`} className="flex justify-between py-2">
+              <Link href={`/players/${r.player_id}`} className="text-seam hover:underline font-body">
+                {r.players?.full_name ?? r.player_id}
+              </Link>
+              <span>{r.stat_type === "hitting" ? `打率 ${r.avg ?? "-"}` : `防御率 ${r.era ?? "-"}`}</span>
+            </li>
+          ))}
+        </ul>
+      </Card>
     </main>
   );
 }

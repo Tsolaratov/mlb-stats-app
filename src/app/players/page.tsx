@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { searchPlayers } from "@/lib/db/players";
+import Card from "@/components/Card";
 
 export default async function PlayersSearchPage({
   searchParams,
@@ -10,28 +11,34 @@ export default async function PlayersSearchPage({
   const players = q ? await searchPlayers(q) : [];
 
   return (
-    <main className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">選手検索</h1>
-      <form className="mb-6">
+    <main className="max-w-2xl mx-auto p-6 space-y-6">
+      <h1 className="font-display font-bold uppercase text-3xl tracking-wide">選手検索</h1>
+      <form>
         <input
           type="text"
           name="q"
           defaultValue={q ?? ""}
           placeholder="選手名で検索"
-          className="border px-3 py-2 w-full"
+          className="bg-card text-ink placeholder:text-ink-soft border border-card-line rounded-sm px-3 py-2 w-full font-body focus:outline-none focus:ring-2 focus:ring-amber"
         />
       </form>
-      {q && players.length === 0 && <p>「{q}」に一致する選手が見つかりませんでした。</p>}
-      <ul className="space-y-2">
-        {players.map((p) => (
-          <li key={p.id}>
-            <Link href={`/players/${p.id}`} className="text-blue-600 hover:underline">
-              {p.full_name}
-            </Link>
-            {!p.is_active && <span className="text-gray-400 text-sm ml-2">(引退)</span>}
-          </li>
-        ))}
-      </ul>
+      {q && players.length === 0 && (
+        <p className="text-card/80">「{q}」に一致する選手が見つかりませんでした。</p>
+      )}
+      {players.length > 0 && (
+        <Card>
+          <ul className="divide-y divide-card-line">
+            {players.map((p) => (
+              <li key={p.id} className="py-2">
+                <Link href={`/players/${p.id}`} className="text-seam hover:underline font-body">
+                  {p.full_name}
+                </Link>
+                {!p.is_active && <span className="text-ink-soft text-sm ml-2">(引退)</span>}
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
     </main>
   );
 }

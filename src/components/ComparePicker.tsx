@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Card from "@/components/Card";
 
 interface SearchResult {
   id: number;
@@ -44,31 +45,37 @@ export default function ComparePicker({ selectedIds }: { selectedIds: number[] }
   }
 
   return (
-    <div>
+    <div className="space-y-3">
       <input
         type="text"
         value={query}
         onChange={(e) => handleSearch(e.target.value)}
         placeholder="選手を追加(2文字以上、最大5人)"
-        className="border px-3 py-2 w-full"
+        className="bg-card text-ink placeholder:text-ink-soft border border-card-line rounded-sm px-3 py-2 w-full font-body focus:outline-none focus:ring-2 focus:ring-amber"
       />
       {results.length > 0 && (
-        <ul className="border mt-1">
-          {results.map((r) => (
-            <li key={r.id}>
-              <button
-                onClick={() => addPlayer(r.id)}
-                className="px-3 py-1 hover:bg-gray-100 w-full text-left"
-              >
-                {r.full_name}
-              </button>
-            </li>
-          ))}
-        </ul>
+        <Card className="p-0 overflow-hidden">
+          <ul className="divide-y divide-card-line">
+            {results.map((r) => (
+              <li key={r.id}>
+                <button
+                  onClick={() => addPlayer(r.id)}
+                  className="px-3 py-2 hover:bg-amber/20 w-full text-left font-body"
+                >
+                  {r.full_name}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </Card>
       )}
-      <div className="flex gap-2 mt-2 flex-wrap">
+      <div className="flex gap-2 flex-wrap">
         {selectedIds.map((id) => (
-          <button key={id} onClick={() => removePlayer(id)} className="border px-2 py-1 text-sm">
+          <button
+            key={id}
+            onClick={() => removePlayer(id)}
+            className="border border-amber text-amber rounded-sm px-2 py-1 text-sm font-data hover:bg-amber hover:text-field-dark transition-colors"
+          >
             ID:{id} ✕
           </button>
         ))}
