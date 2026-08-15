@@ -14,7 +14,7 @@ export function isLeaderStat(value: string | undefined): value is LeaderStat {
 const ASCENDING_STATS = new Set<string>(["era", "whip"]);
 
 /** Minimum playing time required to appear on a leaderboard. */
-const MIN_GAMES = 10;
+const MIN_AT_BATS = 20;
 const MIN_INNINGS_PITCHED = 10;
 
 export interface LeaderRow {
@@ -43,7 +43,7 @@ export async function getLeaders(
   query =
     statType === "pitching"
       ? query.gte("innings_pitched", MIN_INNINGS_PITCHED)
-      : query.gte("games", MIN_GAMES);
+      : query.gte("at_bats", MIN_AT_BATS);
 
   const { data, error } = await query.order(stat, { ascending }).limit(limit);
   if (error) throw error;

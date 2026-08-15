@@ -30,6 +30,7 @@ export interface StandingRow {
 
 export interface StatFields {
   games: number | null;
+  at_bats: number | null;
   avg: number | null;
   hr: number | null;
   rbi: number | null;

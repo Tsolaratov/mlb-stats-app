@@ -74,6 +74,7 @@ function extractStatFields(
   if (statType === "hitting") {
     return {
       games,
+      at_bats: toInt(stat.atBats),
       avg: toNum(stat.avg),
       hr: toInt(stat.homeRuns),
       rbi: toInt(stat.rbi),
@@ -93,6 +94,7 @@ function extractStatFields(
 
   return {
     games,
+    at_bats: null,
     avg: null,
     hr: null,
     rbi: null,

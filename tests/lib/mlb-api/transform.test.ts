@@ -289,6 +289,7 @@ describe("mapCareerStats", () => {
         player_id: 660271,
         stat_type: "hitting",
         games: 800,
+        at_bats: null,
         avg: 0.27,
         hr: 200,
         rbi: 600,
